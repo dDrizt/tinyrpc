@@ -10,6 +10,10 @@ FdEvent::FdEvent(int fd) : fd_(fd) {
     memset(&event_, 0, sizeof(event_));
 }
 
+FdEvent::FdEvent() {
+    memset(&event_, 0, sizeof(event_));
+}
+
 FdEvent::~FdEvent() {
     close(fd_);
 }

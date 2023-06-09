@@ -12,6 +12,7 @@ public:
         ERROR_EVENT = EPOLLERR, 
     };
 
+    FdEvent();
     FdEvent(int fd);
 
     ~FdEvent();
