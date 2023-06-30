@@ -43,9 +43,26 @@ void FdEvent::listenEvent(TriggerType event_type, std::function<void()> callback
     if (error_callback != nullptr) {
         event_.events |= EPOLLERR;
         errorCallback_ = error_callback;
+    } else {
+        errorCallback_ = nullptr;
     }
 
     event_.data.ptr = this;
+}
+
+void FdEvent::cancle(TriggerType event_type) {
+    if (event_type == TriggerType::IN_EVENT) {
+        event_.events &= ~EPOLLIN;
+        readCallback_ = nullptr;
+    } else if (event_type == TriggerType::OUT_EVENT) {
+        event_.events &= ~EPOLLOUT;
+        writeCallback_ = nullptr;
+    } else if (event_type == TriggerType::ERROR_EVENT) {
+        event_.events &= ~EPOLLERR;
+        errorCallback_ = nullptr;
+    } else {
+        ERRORLOG("Unknown event type");
+    }
 }
 
 void FdEvent::setNonBlock() {

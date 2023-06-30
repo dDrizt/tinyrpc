@@ -5,7 +5,7 @@
 #define READ_XML_NODE(name, parent) \
 TiXmlElement* name##_node = parent->FirstChildElement(#name); \
 if (!name##_node) { \
-    printf("Start tinyRPC server error, failed to read node [%s]", xml_file, #name); \
+    printf("Start tinyRPC server error, failed to read node [%s]", #name); \
     exit(0); \
 } \
 

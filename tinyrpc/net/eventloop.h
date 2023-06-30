@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <string.h>
 #include <set>
 #include <queue>
 #include <functional>
@@ -9,6 +10,7 @@
 #include "tinyrpc/net/fdevent.h"
 #include "tinyrpc/net/wakeup_fd.h"
 #include "tinyrpc/common/util.h"
+#include "tinyrpc/net/timer.h"
 
 
 namespace tinyrpc {
@@ -30,12 +32,26 @@ public:
 
     void addTask(std::function<void()> cb, bool is_immediate = false);
 
+    void addTimerEvent(TimerEvent::s_ptr timer_event);
+
+    EventLoop* getEventLoopOfCurrentThread();
+
+    bool isLooping() {
+        return is_looping;
+    }
+
     bool isInLoopThread() const {
         return threadId_ == getThreadId();
     }
 
 private:
+    void dealWakeup();
+
     void initWakeUpFdEvent();
+
+    void initTimer();
+
+private:
 
     template <typename MapType, typename EventType>
     void addToEpoll(int epollFd, MapType &listenFds, const EventType &fd_event) {
@@ -85,8 +101,11 @@ private:
 
     std::queue<std::function<void()>> pendingFunctors_;
 
+    Timer* timer_ {nullptr};
+
     Mutex mutex_;
 
+    bool is_looping {false};
 };
 
 }   // namespace tinyrpc

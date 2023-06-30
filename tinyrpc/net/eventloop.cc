@@ -7,40 +7,6 @@
 #include "tinyrpc/common/util.h"
 #include "tinyrpc/net/eventloop.h"
 
-
-/*
-#define ADD_TO_EPOLL() \
-auto it = listenFds_.find(fd_event->getFd()); \
-int op = EPOLL_CTL_ADD; \
-if (it != listenFds_.end()) { \
-    op = EPOLL_CTL_MOD; \
-} \
-epoll_event event = fd_event->getEvent(); \
-INFOLOG("epoll_event.events = %d", (int)event.events); \
-int ret = epoll_ctl(epollFd_, op, fd_event->getFd(), &event); \
-if (ret < 0) { \
-    ERRORLOG("epoll_ctl error when add fd, errno: %d, error info: %s", errno, strerror(errno)); \
-    return; \
-} \
-listenFds_.insert(fd_event->getFd()); \
-DEBUGLOG("add fd %d to epoll", fd_event->getFd()); \
-*/
-
-/*
-#define DELETE_FROM_EPOLL() \
-auto it = listenFds_.find(fd_event->getFd()); \
-if (it == listenFds_.end()) { \
-    return; \
-} \
-int ret = epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd_event->getFd(), nullptr); \
-if (ret < 0) { \
-    ERRORLOG("epoll_ctl error when delete fd, errno: %d, error info: %s", errno, strerror(errno)); \
-    return; \
-} \
-listenFds_.erase(it); \
-DEBUGLOG("delete fd %d from epoll", fd_event->getFd()); \
-*/
-
 namespace tinyrpc {
 
 static thread_local EventLoop* t_loopInThisThread = nullptr;
@@ -58,7 +24,7 @@ static int createEventFd() {
 
 EventLoop::EventLoop() {
     if (t_loopInThisThread != nullptr) {
-        ERRORLOG("Another EventLoop exists in this thread");
+        ERRORLOG("Failed to create EventLoop, Another EventLoop exists in this thread");
         exit(0);
     }
 
@@ -71,12 +37,27 @@ EventLoop::EventLoop() {
     }
 
     initWakeUpFdEvent();
+    initTimer();
 
-    INFOLOG("EventLoop created in thread %d", threadId_);
+    INFOLOG("SUCESS, EventLoop created in thread %d", threadId_);
     t_loopInThisThread = this;
 }
 
+EventLoop::~EventLoop() {
+    close(epollFd_);
+    if (wakeupFdEvent_ != nullptr) {
+        delete wakeupFdEvent_;
+        wakeupFdEvent_ = nullptr;
+    }
+
+    if (timer_ != nullptr) {
+        delete timer_;
+        timer_ = nullptr;
+    }
+}
+
 void EventLoop::loop() {
+    is_looping = true;
     while (!is_stop_) {
         ScopeMutex<Mutex> lock(mutex_);
         std::queue<std::function<void()>> tmpFunctors = std::move(pendingFunctors_);
@@ -91,7 +72,9 @@ void EventLoop::loop() {
 
         int timeout = g_epoll_max_timeout;
         epoll_event events[g_epoll_max_events];
+        DEBUGLOG("now begin to epoll_wait");
         int numEvents = epoll_wait(epollFd_, events, g_epoll_max_events, timeout);
+        DEBUGLOG("now end epoll_wait, rt = %d", numEvents);
 
         if (numEvents < 0) {
             ERRORLOG("epoll_wait error, errno: %d, error info: %s", errno, strerror(errno));
@@ -105,14 +88,17 @@ void EventLoop::loop() {
                     continue;
                 }
 
-                if (trigger_event.events & EPOLLIN)
+                if (trigger_event.events & EPOLLIN) {
+                    DEBUGLOG("fd %d trigger EPOLLIN event", fdEvent->getFd());
                     addTask(fdEvent->handleEvent(FdEvent::IN_EVENT));
+
+                }
 
                 if (trigger_event.events & EPOLLOUT)
                     addTask(fdEvent->handleEvent(FdEvent::OUT_EVENT));
 
                 if (trigger_event.events & EPOLLERR) {
-                    DEBUGLOG("fd %d error", fdEvent->getFd());
+                    DEBUGLOG("fd %d trigger EPOLLERROR", fdEvent->getFd());
                     delEpollEvent(fdEvent);
                     if (fdEvent->handleEvent(FdEvent::ERROR_EVENT) != nullptr) {
                         DEBUGLOG("fd %d add error callback", fdEvent->getFd());
@@ -175,15 +161,36 @@ void EventLoop::initWakeUpFdEvent() {
 
     wakeupFdEvent_ = new WakeUpFdEvent(wakeupFd_);
     wakeupFdEvent_->listenEvent(FdEvent::IN_EVENT, [this]() {
-        uint64_t one = 1;
-        ssize_t n = read(wakeupFd_, &one, sizeof(one));
-        while (n != -1 && errno != EAGAIN) {}
-        DEBUGLOG("EventLoop::wakeupFdEvent_ read %ld bytes", n)
+        // uint64_t one = 1;
+        // ssize_t n = read(wakeupFd_, &one, sizeof(one));
+        // while (n != -1 && errno != EAGAIN) {}
+        // DEBUGLOG("EventLoop::wakeupFdEvent_ read %ld bytes", n)
+
+        char buf[8];
+        while(read(wakeupFd_, buf, 8) != -1 && errno != EAGAIN) {
+        }
+        DEBUGLOG("read full bytes from wakeup fd[%d]", wakeupFd_);
     });
 
     addEpollEvent(wakeupFdEvent_);
 }
 
+void EventLoop::initTimer() {
+    timer_ = new Timer();
+    addEpollEvent(timer_);
+}
+
+void EventLoop::addTimerEvent(TimerEvent::s_ptr timer_event) {
+    timer_->addTimerEvent(timer_event);
+}
+
+EventLoop* EventLoop::getEventLoopOfCurrentThread() {
+    if (t_loopInThisThread) {
+        return t_loopInThisThread;
+    }
+    t_loopInThisThread = new EventLoop();
+    return t_loopInThisThread;
+}
 
 }  // namespace tinyrpc
 

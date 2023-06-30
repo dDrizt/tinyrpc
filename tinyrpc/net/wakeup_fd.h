@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <unistd.h>
 #include "tinyrpc/common/log.h"
 #include "tinyrpc/net/fdevent.h"
 

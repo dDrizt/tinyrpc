@@ -17,6 +17,14 @@ public:
 
     ~FdEvent();
 
+    void setNonBlock();
+
+    std::function<void()> handleEvent(TriggerType event_type);
+
+    void listenEvent(TriggerType event_type, std::function<void()> callback, std::function<void()> error_callback = nullptr);
+
+    void cancle(TriggerType event_type);
+
     int getFd() const {
         return fd_;
     }
@@ -25,14 +33,8 @@ public:
         return event_;
     }    
 
-    void setNonBlock();
-
-    std::function<void()> handleEvent(TriggerType event_type);
-
-    void listenEvent(TriggerType event_type, std::function<void()> callback, std::function<void()> error_callback = nullptr);
-
 protected:
-    int fd_ {0};
+    int fd_ {-1};
 
     epoll_event event_;
 
@@ -43,4 +45,5 @@ protected:
     std::function<void()> errorCallback_;
 
 };
+
 }   // namespace tinyrpc
