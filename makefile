@@ -1,17 +1,11 @@
-##################################
-# makefile
-# ikerli
-# 2022-05-23
-##################################
-
 PATH_BIN = bin
 PATH_LIB = lib
 PATH_OBJ = obj
 
-PATH_ROCKET = tinyrpc
-PATH_COMM = $(PATH_ROCKET)/common
-PATH_NET = $(PATH_ROCKET)/net
-PATH_TCP = $(PATH_ROCKET)/net/tcp
+PATH_TINYRPC = tinyrpc
+PATH_COMM = $(PATH_TINYRPC)/common
+PATH_NET = $(PATH_TINYRPC)/net
+PATH_TCP = $(PATH_TINYRPC)/net/tcp
 
 PATH_TESTCASES = testcases
 
@@ -33,7 +27,7 @@ CXX := g++
 
 CXXFLAGS += -g -O0 -std=c++11 -Wall -Wno-deprecated -Wno-unused-but-set-variable
 
-CXXFLAGS += -I./ -I$(PATH_ROCKET)	-I$(PATH_COMM) -I$(PATH_NET) -I$(PATH_TCP)
+CXXFLAGS += -I./ -I$(PATH_TINYRPC)	-I$(PATH_COMM) -I$(PATH_NET) -I$(PATH_TCP)
 
 LIBS += /usr/lib/libprotobuf.so	/usr/lib/libtinyxml.a
 
@@ -43,10 +37,10 @@ NET_OBJ := $(patsubst $(PATH_NET)/%.cc, $(PATH_OBJ)/%.o, $(wildcard $(PATH_NET)/
 TCP_OBJ := $(patsubst $(PATH_TCP)/%.cc, $(PATH_OBJ)/%.o, $(wildcard $(PATH_TCP)/*.cc))
 
 # ALL_TESTS : $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp $(PATH_BIN)/test_client $(PATH_BIN)/test_future
-ALL_TESTS : $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop
+ALL_TESTS : $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp
 
 # TEST_CASE_OUT := $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp $(PATH_BIN)/test_client $(PATH_BIN)/test_future
-TEST_CASE_OUT := $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop
+TEST_CASE_OUT := $(PATH_BIN)/test_log $(PATH_BIN)/test_eventloop $(PATH_BIN)/test_tcp
 
 LIB_OUT := $(PATH_LIB)/librocket.a
 
@@ -56,8 +50,8 @@ $(PATH_BIN)/test_log: $(LIB_OUT)
 $(PATH_BIN)/test_eventloop: $(LIB_OUT)
 	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_eventloop.cc -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread
 
-# $(PATH_BIN)/test_tcp: $(LIB_OUT)
-# 	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_tcp.cc -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread
+$(PATH_BIN)/test_tcp: $(LIB_OUT)
+	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_tcp.cc -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread
 
 # $(PATH_BIN)/test_client: $(LIB_OUT)
 # 	$(CXX) $(CXXFLAGS) $(PATH_TESTCASES)/test_client.cc -o $@ $(LIB_OUT) $(LIBS) -ldl -pthread

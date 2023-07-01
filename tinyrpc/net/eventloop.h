@@ -34,8 +34,6 @@ public:
 
     void addTimerEvent(TimerEvent::s_ptr timer_event);
 
-    EventLoop* getEventLoopOfCurrentThread();
-
     bool isLooping() {
         return is_looping;
     }
@@ -43,6 +41,9 @@ public:
     bool isInLoopThread() const {
         return threadId_ == getThreadId();
     }
+
+public:
+    static EventLoop* getEventLoopOfCurrentThread();
 
 private:
     void dealWakeup();
