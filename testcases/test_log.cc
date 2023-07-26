@@ -3,7 +3,7 @@
 #include "tinyrpc/common/config.h"
 
 int main() {
-    tinyrpc::Config::SetGlobalConfigPath("/mnt/Disk__/Dev/tinyrpc/conf/tinyrpc.xml");
+    tinyrpc::Config::SetGlobalConfigPath("/home/kiril/Dev/tinyrpc/conf/tinyrpc.xml");
 
     tinyrpc::Logger::InitGlobalLogger();
 

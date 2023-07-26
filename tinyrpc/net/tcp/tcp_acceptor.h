@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tinyrpc/net/tcp/net_addr.h"
 #include <memory>
+#include "tinyrpc/net/tcp/net_addr.h"
 
 namespace tinyrpc {
 
@@ -14,7 +14,7 @@ public:
 
     int getListenFd();
 
-    int accept();
+    std::pair<int, NetAddr::s_ptr> accept();
 
 private:
     NetAddr::s_ptr local_addr_; // 服务器监听地址，addr -> ip:port

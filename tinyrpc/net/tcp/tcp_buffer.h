@@ -1,11 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 namespace tinyrpc {
 
 class TcpBuffer {
 public:
+    using s_ptr = std::shared_ptr<TcpBuffer>;
+
     TcpBuffer(int size);
 
     ~TcpBuffer();
@@ -36,6 +39,7 @@ private:
     int write_idx_ {0};
     int size_ {0};
 
+public:
     std::vector<char> buffer_;
 };
 

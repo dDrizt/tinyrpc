@@ -13,9 +13,9 @@ public:
 
     virtual sockaddr* getSockAddr() = 0;
 
-    virtual socklen_t getSockLen() const = 0;
+    virtual socklen_t getSockLen() = 0;
 
-    virtual int getFamily() const = 0;
+    virtual int getFamily() = 0;
 
     virtual std::string toString() = 0;
 
@@ -32,13 +32,17 @@ public:
     IPNetAddr(sockaddr_in addr);
 
     sockaddr* getSockAddr();
-    socklen_t getSockLen() const;
 
-    int getFamily() const;
+    socklen_t getSockLen();
+
+    int getFamily();
     
     std::string toString();
 
     bool checkValid();
+
+public:
+    static bool CheckValid(const std::string& addr);
 
 private:
     std::string ip_;

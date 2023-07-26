@@ -5,7 +5,6 @@
 #include <set>
 #include <queue>
 #include <functional>
-
 #include "tinyrpc/common/mutex.h"
 #include "tinyrpc/net/fdevent.h"
 #include "tinyrpc/net/wakeup_fd.h"
@@ -43,7 +42,7 @@ public:
     }
 
 public:
-    static EventLoop* getEventLoopOfCurrentThread();
+    static EventLoop* GetEventLoopOfCurrentThread();
 
 private:
     void dealWakeup();

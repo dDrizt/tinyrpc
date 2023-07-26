@@ -13,7 +13,7 @@ void test_tcp_server() {
 }
 
 int main() {
-    tinyrpc::Config::SetGlobalConfigPath("/mnt/Disk__/Dev/tinyrpc/conf/tinyrpc.xml");
+    tinyrpc::Config::SetGlobalConfigPath("../conf/tinyrpc.xml");
     tinyrpc::Logger::InitGlobalLogger();
 
     test_tcp_server();

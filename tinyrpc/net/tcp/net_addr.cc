@@ -1,8 +1,25 @@
+#include <string.h>
 #include "tinyrpc/common/log.h"
 #include "tinyrpc/net/tcp/net_addr.h"
-#include <string.h>
 
 namespace tinyrpc {
+
+bool IPNetAddr::CheckValid(const std::string& addr) {
+    size_t i = addr.find_first_of(":");
+    if (i == addr.npos)
+        return false;
+
+    std::string ip = addr.substr(0, i);
+    std::string port = addr.substr(i + 1, addr.size() - i - 1);
+    if (ip.empty() || port.empty())
+        return false;
+
+    int iport = std::atoi(port.c_str());
+    if (iport <= 0 || iport > 65536)
+        return false;
+
+    return true;   
+}
 
 IPNetAddr::IPNetAddr(const std::string& ip, uint16_t port) : ip_(ip), port_(port) {
     memset(&addr_, 0, sizeof(addr_));
@@ -37,11 +54,11 @@ sockaddr* IPNetAddr::getSockAddr() {
     return reinterpret_cast<sockaddr*>(&addr_);
 }
 
-socklen_t IPNetAddr::getSockLen() const {
+socklen_t IPNetAddr::getSockLen(){
     return sizeof(addr_);
 }
 
-int IPNetAddr::getFamily() const {
+int IPNetAddr::getFamily(){
     return AF_INET;
 }
 

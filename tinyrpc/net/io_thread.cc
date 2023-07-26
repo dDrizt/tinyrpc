@@ -34,10 +34,10 @@ IOThread::~IOThread() {
 }
 
 void* IOThread::thread_func(void* arg) {
-    IOThread* io_thread = static_cast<IOThread*>(arg);
+    IOThread* io_thread = static_cast<IOThread*> (arg);
 
-    io_thread->thread_id_ = getThreadId();
     io_thread->loop_ = new EventLoop();
+    io_thread->thread_id_ = getThreadId();
 
     sem_post(&io_thread->init_sem_);
     DEBUGLOG("IOThread::thread_func() success, IOThread id = %d", io_thread->thread_id_);

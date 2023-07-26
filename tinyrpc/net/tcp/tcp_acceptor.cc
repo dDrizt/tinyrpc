@@ -1,10 +1,10 @@
-#include "tinyrpc/common/log.h"
-#include "tinyrpc/net/tcp/net_addr.h"
-#include "tinyrpc/net/tcp/tcp_acceptor.h"
 #include <assert.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <string.h>
+#include "tinyrpc/common/log.h"
+#include "tinyrpc/net/tcp/net_addr.h"
+#include "tinyrpc/net/tcp/tcp_acceptor.h"
 
 namespace tinyrpc {
 
@@ -48,7 +48,7 @@ int TcpAcceptor::getListenFd() {
     return listenfd_;
 }
 
-int TcpAcceptor::accept() {
+std::pair<int, NetAddr::s_ptr> TcpAcceptor::accept() {
     if (family_ == AF_INET) {
         sockaddr_in client_addr;
         memset(&client_addr, 0, sizeof(client_addr));
@@ -58,10 +58,13 @@ int TcpAcceptor::accept() {
         if (client_fd < 0)
             ERRORLOG("accept error, errno=%d, error=%s", errno, strerror(errno));
 
-        IPNetAddr peer_addr(client_addr);
-        INFOLOG("A client have accepted succ, peer addr [%s]", peer_addr.toString().c_str());
+        IPNetAddr::s_ptr peer_addr = std::make_shared<IPNetAddr>(client_addr);
+        INFOLOG("A client have accepted succ, peer addr [%s]", peer_addr->toString().c_str());
 
-        return client_fd;
+        return std::make_pair(client_fd, peer_addr);
+    } else {
+        // ...
+        return std::make_pair(-1, nullptr);
     }
 }
 

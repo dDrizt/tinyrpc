@@ -11,16 +11,16 @@ namespace tinyrpc {
 
 static thread_local EventLoop* t_loopInThisThread = nullptr;
 static int g_epoll_max_events = 10;
-static int g_epoll_max_timeout = 1000;
+static int g_epoll_max_timeout = 10000;
 
-static int createEventFd() {
-    int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (eventFd < 0) {
-        ERRORLOG("eventfd error, errno: %d, error info: %s", errno, strerror(errno));
-        exit(0);
-    }
-    return eventFd;
-} 
+// static int createEventFd() {
+//     int eventFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+//     if (eventFd < 0) {
+//         ERRORLOG("eventfd error, errno: %d, error info: %s", errno, strerror(errno));
+//         exit(0);
+//     }
+//     return eventFd;
+// } 
 
 EventLoop::EventLoop() {
     if (t_loopInThisThread != nullptr) {
@@ -30,7 +30,7 @@ EventLoop::EventLoop() {
 
     threadId_ = getThreadId();
 
-    epollFd_ = epoll_create1(EPOLL_CLOEXEC);
+    epollFd_ = epoll_create(10);
     if (epollFd_ < 0) {
         ERRORLOG("epoll_create1 error, errno: %d, error info: %s", errno, strerror(errno));
         exit(0);
@@ -60,7 +60,11 @@ void EventLoop::loop() {
     is_looping = true;
     while (!is_stop_) {
         ScopeMutex<Mutex> lock(mutex_);
-        std::queue<std::function<void()>> tmpFunctors = std::move(pendingFunctors_);
+        // std::queue<std::function<void()>> tmpFunctors = std::move(pendingFunctors_);
+        
+        std::queue<std::function<void()>> tmpFunctors;
+        pendingFunctors_.swap(tmpFunctors);
+
         lock.unlock();
 
         while (!tmpFunctors.empty()) {
@@ -184,7 +188,7 @@ void EventLoop::addTimerEvent(TimerEvent::s_ptr timer_event) {
     timer_->addTimerEvent(timer_event);
 }
 
-EventLoop* EventLoop::getEventLoopOfCurrentThread() {
+EventLoop* EventLoop::GetEventLoopOfCurrentThread() {
     if (t_loopInThisThread) {
         return t_loopInThisThread;
     }

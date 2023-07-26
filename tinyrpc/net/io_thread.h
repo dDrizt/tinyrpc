@@ -16,7 +16,7 @@ public:
 
     void join();
 
-    EventLoop* getLoop() const {
+    EventLoop* getLoop() {
         return loop_;
     }
 

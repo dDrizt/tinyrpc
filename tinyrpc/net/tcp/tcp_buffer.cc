@@ -1,3 +1,4 @@
+#include <memory>
 #include "tcp_buffer.h"
 #include "string.h"
 #include "tinyrpc/common/log.h"
@@ -17,7 +18,7 @@ int TcpBuffer::readAble() {
 }
 
 int TcpBuffer::writeAble() {
-    return size_ - write_idx_;
+    return buffer_.size() - write_idx_;
 }
 
 int TcpBuffer::readIndex() {
@@ -40,16 +41,19 @@ void TcpBuffer::resizeBuffer(int new_size) {
 }
 
 void TcpBuffer::adjustBuffer() {
-    if (read_idx_ < int(buffer_.size() / 3))
+    if (read_idx_ < static_cast<int>(buffer_.size() / 3))
         return;
 
     std::vector<char> buffer(buffer.size());
     int count = readAble();
 
     memcpy(&buffer[0], &buffer_[read_idx_], count);
-    buffer_ = std::move(buffer);
+    // buffer_ = std::move(buffer);
+    buffer_.swap(buffer);
     read_idx_ = 0;
     write_idx_ = read_idx_ + count;
+
+    buffer.clear();
 }
 
 void TcpBuffer::writeToBuffer(const char *buf, int size) {
@@ -59,6 +63,7 @@ void TcpBuffer::writeToBuffer(const char *buf, int size) {
     }
 
     memcpy(&buffer_[write_idx_], buf, size);
+    write_idx_ += size;
 }
 
 void TcpBuffer::readFromBuffer(std::vector<char>& re, int size) {
@@ -70,7 +75,8 @@ void TcpBuffer::readFromBuffer(std::vector<char>& re, int size) {
     std::vector<char> tmp(read_size);
     memcpy(&tmp[0], &buffer_[read_idx_], read_size);
 
-    re = std::move(tmp);
+    // re = std::move(tmp);
+    re.swap(tmp);
     read_idx_ += read_size;
 
     adjustBuffer();
